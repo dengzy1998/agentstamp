@@ -44,7 +44,7 @@ user assets; the Agent ID address can never be changed after deployment.
 | Website / dApp | `<PLACEHOLDER — hosted frontend URL, e.g. GitHub Pages>` |
 | Smart contract (BNB Chain) | `<PLACEHOLDER — deployed AgentStamp address>` |
 | Verified source (BscScan) | `<PLACEHOLDER — https://bscscan.com/address/<address>#code>` |
-| Source code repository | `<PLACEHOLDER — repository URL>` |
+| Source code repository | `https://github.com/dengzy1998/agentstamp` |
 | Agent ID used | `dizzy1998.ai` (holder wallet, for demo check-ins) |
 | Agent ID contract (official) | `0x60b9262456de011f7d15a54cdd8c48baaa8b022f` |
 

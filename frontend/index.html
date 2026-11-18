@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AgentStamp — Daily Check-In for Agent ID Holders</title>
+<style>
+  :root {
+    --bg: #0b0e13;
+    --card: #151a23;
+    --card2: #1b2230;
+    --line: #262f42;
+    --text: #eef1f6;
+    --muted: #98a2b8;
+    --gold: #f0b90b; /* BNB yellow */
+    --gold-dark: #c99400;
+    --green: #3ecf8e;
+    --red: #ff6b6b;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang SC", "Microsoft YaHei", sans-serif;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 20px 14px 48px;
+  }
+  .wrap { width: 100%; max-width: 460px; }
+  header { text-align: center; margin: 18px 0 22px; }
+  .logo { font-size: 40px; line-height: 1; }
+  h1 { font-size: 28px; margin-top: 8px; letter-spacing: .3px; }
+  h1 .accent { color: var(--gold); }
+  .subtitle { color: var(--muted); font-size: 14px; margin-top: 6px; }
+  .card {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    padding: 18px;
+    margin-bottom: 14px;
+  }
+  .card h2 { font-size: 15px; margin-bottom: 10px; color: var(--text); }
+  .card p { font-size: 14px; line-height: 1.65; color: var(--muted); }
+  .card p + p { margin-top: 8px; }
+  .card a { color: var(--gold); text-decoration: none; word-break: break-all; }
+  .btn {
+    display: block;
+    width: 100%;
+    border: none;
+    border-radius: 12px;
+    padding: 14px;
+    font-size: 16px;
+    font-weight: 700;
+    cursor: pointer;
+    background: var(--gold);
+    color: #181a1e;
+    transition: background .15s, opacity .15s;
+  }
+  .btn:hover:not(:disabled) { background: var(--gold-dark); }
+  .btn:disabled { opacity: .45; cursor: not-allowed; }
+  .btn.secondary { background: var(--card2); color: var(--text); border: 1px solid var(--line); }
+  .wallet-line { font-size: 13px; color: var(--muted); text-align: center; margin-top: 10px; word-break: break-all; }
+  .status-pill {
+    display: inline-block;
+    padding: 4px 12px;
+    border-radius: 999px;
+    font-size: 13px;
+    font-weight: 600;
+    margin-bottom: 12px;
+  }
+  .status-pill.yes { background: rgba(62,207,142,.15); color: var(--green); }
+  .status-pill.no { background: rgba(255,107,107,.13); color: var(--red); }
+  .stats { display: flex; gap: 10px; margin: 6px 0 16px; }
+  .stat {
+    flex: 1;
+    background: var(--card2);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 12px 6px;
+    text-align: center;
+  }
+  .stat .num { font-size: 24px; font-weight: 800; color: var(--gold); }
+  .stat .lbl { font-size: 12px; color: var(--muted); margin-top: 2px; }
+  .badges { display: flex; gap: 8px; justify-content: space-between; margin-top: 4px; }
+  .badge {
+    flex: 1;
+    text-align: center;
+    padding: 10px 2px;
+    border-radius: 12px;
+    border: 1px solid var(--line);
+    background: var(--card2);
+    opacity: .38;
+    filter: grayscale(1);
+  }
+  .badge.earned { opacity: 1; filter: none; border-color: var(--gold); }
+  .badge .ico { font-size: 20px; }
+  .badge .cap { font-size: 11px; color: var(--muted); margin-top: 3px; }
+  .badge.earned .cap { color: var(--gold); font-weight: 700; }
+  .msg { font-size: 14px; line-height: 1.6; text-align: center; margin-top: 12px; min-height: 22px; }
+  .msg.err { color: var(--red); }
+  .msg.ok { color: var(--green); }
+  .risk { border-color: rgba(240,185,11,.4); }
+  .risk p { color: #cbb26a; }
+  .hidden { display: none; }
+  footer { text-align: center; color: var(--muted); font-size: 12px; margin-top: 10px; line-height: 1.7; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <div class="logo">🛂</div>
+    <h1>Agent<span class="accent">Stamp</span></h1>
+    <p class="subtitle">Daily check-in for Binance Agent ID holders<br>币安 Agent ID 持有者专属每日签到</p>
+  </header>
+
+  <div class="card">
+    <h2>What is this?</h2>
+    <p><strong style="color:var(--text)">Agent ID</strong> is Binance Wallet's on-chain identity for AI
+    agents — a non-transferable ERC-721 token on BNB Chain. If your wallet holds one, it proves you
+    registered an agent identity (yours looks like <em>yourname.ai</em>).</p>
+    <p>AgentStamp lets Agent ID holders <strong style="color:var(--text)">check in once a day</strong>.
+    Keep your streak alive and earn soulbound badge NFTs at 3, 7, 14, 21 and 30 total check-ins.
+    Badges can never be transferred or sold — they only prove you showed up.</p>
+  </div>
+
+  <div class="card" id="appCard">
+    <button class="btn" id="connectBtn">Connect Wallet</button>
+    <p class="wallet-line" id="walletLine"></p>
+
+    <div id="panel" class="hidden">
+      <span class="status-pill" id="holderPill"></span>
+      <div class="stats">
+        <div class="stat"><div class="num" id="statTotal">–</div><div class="lbl">Total check-ins</div></div>
+        <div class="stat"><div class="num" id="statStreak">–</div><div class="lbl">Day streak 🔥</div></div>
+        <div class="stat"><div class="num" id="statBadges">–</div><div class="lbl">Badges</div></div>
+      </div>
+      <div class="badges" id="badgeRow"></div>
+      <div style="height:14px"></div>
+      <button class="btn" id="checkinBtn">✅ Check In Today</button>
+      <p class="msg" id="msg"></p>
+    </div>
+  </div>
+
+  <div class="card risk">
+    <h2>⚠️ Please read</h2>
+    <p>Each check-in is a real BNB Chain transaction and costs a small amount of BNB in gas
+    (usually a few cents). Badges are collectible proof-of-attendance tokens with
+    <strong>no promised value</strong> — they cannot be transferred or sold. AgentStamp's contract
+    has no owner or admin keys and never touches your funds; it only records check-ins and mints badges.</p>
+  </div>
+
+  <footer>
+    Agent ID contract (BNB Chain):<br>
+    <span style="word-break:break-all">0x60b9262456de011f7d15a54cdd8c48baaa8b022f</span><br>
+    Built for the Binance Wallet × BNB Chain Agent ID Hackathon.
+  </footer>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/ethers@6.13.2/dist/ethers.umd.min.js"></script>
+<script>
+"use strict";
+
+/* =====================================================================
+   CONFIG — FILL IN AFTER DEPLOYMENT
+   ---------------------------------------------------------------------
+   1. Deploy AgentStamp.sol (see README.md) with the Agent ID contract
+      address below as the constructor argument.
+   2. Paste the deployed AgentStamp address into AGENT_STAMP_ADDRESS.
+   Until then the page runs in "preview" mode: it still checks your
+   Agent ID, but check-in is disabled.
+   ===================================================================== */
+const CONFIG = {
+  AGENT_ID_ADDRESS: "0x60b9262456de011f7d15a54cdd8c48baaa8b022f", // Binance Agent ID (BNB Chain, official)
+  AGENT_STAMP_ADDRESS: "0x0000000000000000000000000000000000000000", // ⬅️ TO FILL AFTER DEPLOYMENT
+  BSC_CHAIN_ID: 56,
+  BSC_PARAMS: {
+    chainId: "0x38",
+    chainName: "BNB Smart Chain",
+    nativeCurrency: { name: "BNB", symbol: "BNB", decimals: 18 },
+    rpcUrls: ["https://bsc-dataseed.bnbchain.org"],
+    blockExplorerUrls: ["https://bscscan.com"]
+  },
+  MILESTONES: [3, 7, 14, 21, 30]
+};
+
+const AGENT_ID_ABI = ["function balanceOf(address owner) view returns (uint256)"];
+const STAMP_ABI = [
+  "function checkIn()",
+  "function getStats(address user) view returns (uint256 totalCheckins, uint256 currentStreak, uint256 lastCheckinDay, uint8 badgesMask)"
+];
+
+const $ = (id) => document.getElementById(id);
+let provider, signer, account;
+
+function setMsg(text, cls) {
+  const el = $("msg");
+  el.textContent = text || "";
+  el.className = "msg" + (cls ? " " + cls : "");
+}
+
+function stampDeployed() {
+  return CONFIG.AGENT_STAMP_ADDRESS !== "0x0000000000000000000000000000000000000000";
+}
+
+async function ensureBsc() {
+  const chainId = Number(await window.ethereum.request({ method: "eth_chainId" }));
+  if (chainId === CONFIG.BSC_CHAIN_ID) return;
+  try {
+    await window.ethereum.request({
+      method: "wallet_switchEthereumChain",
+      params: [{ chainId: CONFIG.BSC_PARAMS.chainId }]
+    });
+  } catch (e) {
+    if (e.code === 4902) {
+      await window.ethereum.request({
+        method: "wallet_addEthereumChain",
+        params: [CONFIG.BSC_PARAMS]
+      });
+    } else {
+      throw e;
+    }
+  }
+}
+
+async function connect() {
+  if (!window.ethereum) {
+    alert("No wallet found. Please open this page inside Binance Wallet or a browser with MetaMask installed.");
+    return;
+  }
+  try {
+    $("connectBtn").disabled = true;
+    await ensureBsc();
+    provider = new ethers.BrowserProvider(window.ethereum);
+    await provider.send("eth_requestAccounts", []);
+    signer = await provider.getSigner();
+    account = await signer.getAddress();
+    $("walletLine").textContent = "Connected: " + account;
+    $("connectBtn").textContent = "Wallet Connected";
+    $("panel").classList.remove("hidden");
+    await refresh();
+  } catch (e) {
+    $("connectBtn").disabled = false;
+    alert("Connection failed: " + (e.shortMessage || e.message || e));
+  }
+}
+
+async function refresh() {
+  setMsg("");
+  const agentId = new ethers.Contract(CONFIG.AGENT_ID_ADDRESS, AGENT_ID_ABI, provider);
+  const idBalance = await agentId.balanceOf(account);
+  const holder = idBalance > 0n;
+  const pill = $("holderPill");
+  pill.textContent = holder ? "✔ Agent ID holder" : "✖ No Agent ID found in this wallet";
+  pill.className = "status-pill " + (holder ? "yes" : "no");
+
+  if (!stampDeployed()) {
+    $("statTotal").textContent = "–";
+    $("statStreak").textContent = "–";
+    $("statBadges").textContent = "–";
+    renderBadges(0);
+    $("checkinBtn").disabled = true;
+    $("checkinBtn").textContent = "Contract not deployed yet (preview)";
+    return;
+  }
+
+  const stamp = new ethers.Contract(CONFIG.AGENT_STAMP_ADDRESS, STAMP_ABI, provider);
+  const [total, streak, lastDay, mask] = await stamp.getStats(account);
+  $("statTotal").textContent = total.toString();
+  $("statStreak").textContent = streak.toString();
+  let badgeCount = 0;
+  for (let i = 0; i < 5; i++) if ((Number(mask) >> i) & 1) badgeCount++;
+  $("statBadges").textContent = badgeCount + " / 5";
+  renderBadges(Number(mask));
+
+  const todayUtc = Math.floor(Date.now() / 86400000);
+  const btn = $("checkinBtn");
+  if (!holder) {
+    btn.disabled = true;
+    btn.textContent = "Agent ID required to check in";
+  } else if (Number(lastDay) === todayUtc && Number(total) > 0) {
+    btn.disabled = true;
+    btn.textContent = "✅ Already checked in today";
+  } else {
+    btn.disabled = false;
+    btn.textContent = "✅ Check In Today";
+  }
+}
+
+function renderBadges(mask) {
+  const icons = ["🥉", "🥈", "🥇", "🏆", "👑"];
+  $("badgeRow").innerHTML = CONFIG.MILESTONES.map((m, i) => {
+    const earned = (mask >> i) & 1;
+    return '<div class="badge' + (earned ? " earned" : "") + '">' +
+      '<div class="ico">' + icons[i] + '</div>' +
+      '<div class="cap">' + m + " days</div></div>";
+  }).join("");
+}
+
+async function checkIn() {
+  const btn = $("checkinBtn");
+  try {
+    btn.disabled = true;
+    setMsg("Waiting for you to confirm in your wallet…");
+    const stamp = new ethers.Contract(CONFIG.AGENT_STAMP_ADDRESS, STAMP_ABI, signer);
+    const tx = await stamp.checkIn();
+    setMsg("Transaction sent, waiting for confirmation…");
+    await tx.wait();
+    setMsg("🎉 Check-in recorded! See you tomorrow.", "ok");
+    await refresh();
+  } catch (e) {
+    btn.disabled = false;
+    const reason = (e.reason || e.shortMessage || e.message || "Transaction failed").toString();
+    setMsg("Check-in failed: " + reason, "err");
+  }
+}
+
+$("connectBtn").addEventListener("click", connect);
+$("checkinBtn").addEventListener("click", checkIn);
+if (window.ethereum) {
+  window.ethereum.on("accountsChanged", () => location.reload());
+  window.ethereum.on("chainChanged", () => location.reload());
+}
+</script>
+</body>
+</html>
